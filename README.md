@@ -2,7 +2,7 @@
 Make and use toy-money easily with REST API.
 The money said below is not-real money.
 
-Features:
+## Features
 - User can have a wallet.
 - User can give their money to otherone with message.
 - User can get transaction histories.
@@ -15,9 +15,8 @@ Features:
 - Admin can get all transaction history.
 - Admin can control user's wallet.
 
-API Map:
-
-User
+## API endpoints
+Wallets
 - wallets GET
 - wallets POST
 - wallets/properties GET
@@ -28,6 +27,8 @@ User
 - wallets/<wallets_id> GET (Admin only)
 - wallets/<wallets_id> PUT (Admin only)
 - wallets/<wallets_id> DELETE (Admin only)
+
+Transactions
 - transactions GET (Admin only)
 - transactions/fee GET (Admin only)
 - transactions/fee PUT (Admin only)
@@ -38,16 +39,16 @@ Machine
 - machines/<machine_id:int> GET
 - machines/<machine_id:int> PUT (Admin only)
 - machines/<machine_id:int> DELETE  (Admin only)
-- machines/<machine_id:int>/<product_id>/buy POST
-※自販機名も商品リストもPUTで指定できる
-※内部的にユーザーIDも作成して管理する
+- machines/<machine_id:int>/<product_id>/buy POST  
+※自販機名も商品リストもPUTで指定できる  
+※内部的にユーザーIDも作成して管理する  
 
 Product
 - products GET
 - products POST (Admin only)
 - products/<product_id:int> GET
 - products/<product_id:int> PUT (Admin only)
-- products/<product_id:int> DELETE (Admin only)
+- products/<product_id:int> DELETE (Admin only)  
 ※商品は自販機に後で個別に設定する
 
 Airdrop
