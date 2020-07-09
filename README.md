@@ -55,4 +55,4 @@ Airdrop
 - airdrops POST (Admin only)
 - airdrops/<airdrop_id:int> GET
 - airdrops/<airdrop_id:int> PUT
-- airdrops/<airdrop_id:int>/recieve POST
+- airdrops/<airdrop_id:int>/claim POST

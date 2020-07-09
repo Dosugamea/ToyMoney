@@ -28,6 +28,6 @@ async def delete_airdrop_as_admin(airdrop_id: int):
     return {"text": "hello world!"}
 
 
-@router.post('/{airdrop_id}/recieve')
+@router.post('/{airdrop_id}/claim')
 async def recieve_airdrop(airdrop_id: int):
     return {"text": "hello world!"}
