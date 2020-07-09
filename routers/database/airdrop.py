@@ -10,7 +10,7 @@ class AirdropOrm(Base):
     """
     __tablename__ = 'airdrops'
 
-    airdrop_id = Column(Integer, primary_key=True)
+    airdrop_id = Column(Integer, autoincrement=True, primary_key=True)
     airdrop_name = Column(String(63))
     airdrop_description = Column(String(300))
     airdrop_amount = Column(Integer(10))

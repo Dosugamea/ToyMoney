@@ -11,7 +11,7 @@ class TransactionOrm(Base):
     """
     __tablename__ = 'transactions'
 
-    transaction_id = Column(Integer, primary_key=True)
+    transaction_id = Column(Integer, autoincrement=True, primary_key=True)
     transaction_reception = Column(DATETIME, default=datetime.now, nullable=False)
     transaction_provider = Column(Integer, ForeignKey('user.user_id'))
     transaction_reciever = Column(Integer, ForeignKey('user.user_id'))

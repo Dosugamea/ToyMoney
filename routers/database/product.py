@@ -11,7 +11,7 @@ class ProductOrm(Base):
     """
     __tablename__ = 'products'
 
-    product_id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, autoincrement=True, primary_key=True)
     product_name = Column(String(255))
     product_description = Column(String(255))
     product_price = Column(Integer)

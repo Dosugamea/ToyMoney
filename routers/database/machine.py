@@ -11,7 +11,7 @@ class MachineOrm(Base):
     """
     __tablename__ = 'machines'
 
-    machine_id = Column(Integer, primary_key=True)
+    machine_id = Column(Integer, autoincrement=True, primary_key=True)
     machine_name = Column(String(63))
     machine_description = Column(String(300))
     machine_products = relationship("Product", backref="machines")
