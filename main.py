@@ -1,7 +1,11 @@
 from fastapi import FastAPI
-from routers import airdrops, machines, products, transactions, wallets
+from routers import airdrops, machines, products, transactions, users
 
-app = FastAPI()
+app = FastAPI(
+    title='ToyMoneyServer',
+    description='Build and use toy money easily.',
+    version='0.1'
+)
 
 
 @app.get('/')
@@ -34,7 +38,7 @@ app.include_router(
 )
 
 app.include_router(
-    wallets.router,
-    prefix="/wallets",
+    users.router,
+    prefix="/users",
     responses={404: {"description": "Not found"}},
 )

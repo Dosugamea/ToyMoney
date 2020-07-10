@@ -1,11 +1,24 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from .database import session
+from . import crud, schemas
 
 router = APIRouter()
 
 
-@router.get('/')
-async def get_user_wallet():
-    return {"text": "hello world!"}
+@router.get('/{user_id}', response_model=schemas.User)
+async def get_user(user_id: str, db: Session = Depends(session)):
+    """
+    ユーザー情報を取得します
+    :param user_id: UserID
+    :param db: DB Session
+    :return: User Profile
+    :rtype: JSON
+    """
+    user = crud.get_user(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User not found: {user_id}")
+    return user
 
 
 @router.post('/create')
