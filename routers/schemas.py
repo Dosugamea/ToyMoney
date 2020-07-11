@@ -45,12 +45,19 @@ class Transaction(BaseModel):
         orm_mode = True
 
 
+class NewUser(BaseModel):
+    name: constr(max_length=20)
+    password: constr(min_length=10, max_length=100)
+
+    class Config:
+        orm_mode = True
+
+
 class User(BaseModel):
     id: int
     name: constr(max_length=63)
     money: int
     inventories: List[Product]
-    authorization_key: constr(max_length=300)
     is_admin: bool
 
     class Config:

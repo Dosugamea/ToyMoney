@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+from .models import Base
 
 # Database setting
 DB_TYPE = 'sqlite'
@@ -12,7 +13,7 @@ ECHO = True
 if DB_TYPE == 'mysql':
     DATABASE = f'mysql://{USERNAME}:{PASSWORD}@{HOST_IP}/{DB_NAME}?charset=utf8'
 else:
-    DATABASE = f'sqlite:////{DB_NAME}.sqlite3'
+    DATABASE = f'sqlite:///{DB_NAME}.sqlite3'
 
 engine = create_engine(
     DATABASE,
@@ -21,6 +22,7 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base.metadata.create_all(engine)
 
 
 def session():

@@ -3,6 +3,8 @@ from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 
+# SQLalchemy Models
+
 Base = declarative_base()
 
 
@@ -119,8 +121,11 @@ class User(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String(255))
+    money = Column(Integer, server_default="0")
+    password = Column(String(300))
     inventories = relationship("UserInventory")
     authorization_key = Column(String(255))
+    authorization_seq = Column(Integer, server_default="0")
     is_admin = Column(Integer, server_default="0")
 
     def __repr__(self):
@@ -128,4 +133,5 @@ class User(Base):
         name={self.name},
         inventories={self.inventories},
         authorization_key={self.authorization_key},
+        authorization_seq={self.authorization_seq},
         is_admin={self.is_admin})>"""

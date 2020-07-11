@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from routers import airdrops, machines, products, transactions, users
 
 app = FastAPI(
@@ -42,3 +43,7 @@ app.include_router(
     prefix="/users",
     responses={404: {"description": "Not found"}},
 )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=7070)
