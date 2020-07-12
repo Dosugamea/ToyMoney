@@ -91,6 +91,9 @@ class Machine(Base):
 class Transaction(Base):
     """
     取引モデル
+
+    provider_type 0: ユーザー 2: エアドロップ 2: 強制
+    reciever_type 0: ユーザー 1: エアドロップ 2: 強制
     """
     __tablename__ = 'transactions'
 
@@ -100,7 +103,9 @@ class Transaction(Base):
         default=datetime.now,
         nullable=False
     )
+    provider_type = Column(Integer)
     provider = Column(Integer, ForeignKey('users.id'))
+    reciever_type = Column(Integer)
     reciever = Column(Integer, ForeignKey('users.id'))
     message = Column(String(280))
 
@@ -108,9 +113,11 @@ class Transaction(Base):
         return f"""<Transaction(
         id={self.id},
         reception={self.reception.strftime('%Y-%m-%d %H:%M:%S')},
+        provider_type={self.provider_type},
         provider={self.provider},
-        reciever={self.reciever}),
-        message={self.message}>"""
+        reciever_type={self.reciever_type},
+        reciever={self.reciever},
+        message={self.message})>"""
 
 
 class User(Base):
