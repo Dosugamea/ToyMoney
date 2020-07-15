@@ -13,19 +13,3 @@ async def get_transactions_as_admin(
     db: Session = Depends(session)
 ):
     return {"text": "hello world!"}
-
-
-@router.get('/fee')
-async def get_transactions_fee_as_admin(
-    user: dict = Depends(verify_admin),
-    db: Session = Depends(session)
-):
-    return {"text": "hello world!"}
-
-
-@router.put('/fee')
-async def set_transactions_fee_as_admin(
-    user: dict = Depends(verify_admin),
-    db: Session = Depends(session)
-):
-    return {"text": "hello world!"}

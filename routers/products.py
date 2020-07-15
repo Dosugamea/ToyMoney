@@ -10,17 +10,46 @@ router = APIRouter()
 
 @router.get('/list')
 async def get_products(
+    page: int = 1,
+    sort: int = 1,
+    count: int = 20,
     db: Session = Depends(session)
 ):
-    return {"text": "hello world!"}
+    products, total = crud.list_product(db, page, sort, count)
+    products = [
+        {
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "price": p.price
+        }
+        for p in products
+    ]
+    pages, extra = divmod(total, count)
+    if extra:
+        pages += 1
+    return {
+        "text": "ok",
+        "products": products,
+        "pages": pages,
+        "current": page,
+        "total": total
+    }
 
 
 @router.post('/create')
 async def create_product_as_admin(
+    product: schemas.ProductCreateRequest,
     user: dict = Depends(verify_admin),
     db: Session = Depends(session)
 ):
-    return {"text": "hello world!"}
+    crud.create_product(
+        db,
+        product.name,
+        product.description,
+        product.price
+    )
+    return {"text": "ok"}
 
 
 @router.get('/{product_id}')
@@ -29,16 +58,33 @@ async def get_product(
     user: dict = Depends(verify_admin),
     db: Session = Depends(session)
 ):
-    return {"text": "hello world!"}
+    product = crud.get_product(
+        db,
+        product_id
+    )
+    return {
+        "text": "ok",
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "price": product.price
+    }
 
 
 @router.put('/{product_id}')
 async def set_product_info_as_admin(
-    product_id: int,
-    user: dict = Depends(verify_admin),
+    product: schemas.ProductEditRequest,
+    admin: dict = Depends(verify_admin),
     db: Session = Depends(session)
 ):
-    return {"text": "hello world!"}
+    crud.put_product(
+        db,
+        product.id,
+        product.name,
+        product.description,
+        product.price
+    )
+    return {"text": "ok"}
 
 
 @router.delete('/{product_id}')
@@ -47,4 +93,15 @@ async def delete_product_as_admin(
     user: dict = Depends(verify_admin),
     db: Session = Depends(session)
 ):
-    return {"text": "hello world!"}
+    crud.delete_product(db, product_id)
+    return {"text": "ok"}
+
+
+@router.post('/{product_id}/buy')
+async def buy_product(
+    product_id: int,
+    user: dict = Depends(verify_token),
+    db: Session = Depends(session)
+):
+    crud.buy_product(db, user['id'], product_id)
+    return {"text": "ok"}

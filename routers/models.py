@@ -92,8 +92,8 @@ class Transaction(Base):
     """
     取引モデル
 
-    provider_type 0: ユーザー 2: エアドロップ 2: 強制
-    reciever_type 0: ユーザー 1: エアドロップ 2: 強制
+    provider_type 0: ユーザー 1: エアドロップ 2: 商品 3: 強制
+    reciever_type 0: ユーザー 1: エアドロップ 2: 商品 3: 強制
     """
     __tablename__ = 'transactions'
 
@@ -104,9 +104,9 @@ class Transaction(Base):
         nullable=False
     )
     provider_type = Column(Integer)
-    provider = Column(Integer, ForeignKey('users.id'))
+    provider = Column(Integer)
     reciever_type = Column(Integer)
-    reciever = Column(Integer, ForeignKey('users.id'))
+    reciever = Column(Integer)
     message = Column(String(280))
 
     def __repr__(self):

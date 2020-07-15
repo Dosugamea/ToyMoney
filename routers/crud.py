@@ -1,14 +1,16 @@
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import text, desc, asc, or_
+from sqlalchemy.sql import text, desc, asc, or_, and_
 from fastapi import HTTPException
 from typing import List
 from . import models, schemas
 from .authorizator import SALT, generate_token
 from hashlib import sha256
+import datetime
 
 
 def list_user(db: Session, page: int, sort: int, count: int):
     q = db.query(models.User)
+    user_count = db.query(models.User).count()
     sortDict = {
         1: desc(models.User.id),
         2: asc(models.User.id),
@@ -21,10 +23,10 @@ def list_user(db: Session, page: int, sort: int, count: int):
         sort = 1
     q = q.order_by(sortDict[sort])
     q = q.limit(count).offset(page*count).all()
-    return q
+    return q, user_count
 
 
-def create_user(db: Session, new_user: schemas.NewUser):
+def create_user(db: Session, new_user: schemas.UserCreateRequest):
     # 重複するアカウント禁止
     isExist = db.query(models.User.id).filter_by(
         name=new_user.name
@@ -70,7 +72,7 @@ def put_user(
     user_id: int,
     name: str = '',
     money: int = None,
-    is_admin: int = None
+    is_admin: bool = None
 ):
     # パラメータ確認
     if not name and money is None and is_admin is None:
@@ -112,7 +114,7 @@ def delete_user(db: Session, id: int):
     db.query(models.User).filter(
         models.User.id == id
     ).delete()
-    # TODO: Replace transactions as deleted-user account
+    # TODO: Replace transactions with deleted-user account
     db.query(models.Transaction).filter(
         or_(
             models.Transaction.provider == id,
@@ -125,6 +127,7 @@ def delete_user(db: Session, id: int):
 
 def list_product(db: Session, page: int, sort: int, count: int):
     q = db.query(models.Product)
+    product_count = db.query(models.Product).count()
     sortDict = {
         1: desc(models.Product.id),
         2: asc(models.Product.id),
@@ -137,7 +140,7 @@ def list_product(db: Session, page: int, sort: int, count: int):
         sort = 1
     q = q.order_by(sortDict[sort])
     q = q.limit(count).offset(page*count).all()
-    return q
+    return q, product_count
 
 
 def create_product(db: Session, name: str, description: str, price: int):
@@ -228,8 +231,54 @@ def delete_product(db: Session, id: int):
     return True
 
 
+def buy_product(db: Session, user_id: int, product_id: int):
+    isExist = db.query(models.User.id).filter_by(
+        id=user_id
+    ).scalar() is not None
+    if not isExist:
+        raise HTTPException(
+            status_code=404,
+            detail="The user is not exist"
+        )
+    isExist = db.query(models.Product.id).filter_by(
+        id=product_id
+    ).scalar() is not None
+    if not isExist:
+        raise HTTPException(
+            status_code=404,
+            detail="The product is not exist"
+        )
+    user = db.query(models.User).filter(
+        models.User.id == user_id
+    ).first()
+    product = db.query(models.Product).filter(
+        models.Product.id == product_id
+    ).first()
+    if user.money < product.price:
+        raise HTTPException(
+            status_code=402,
+            detail="Not enough money"
+        )
+    user.money -= product.price
+    addInventoryRequest = models.UserInventory(
+        user_id=user_id,
+        product_id=product_id
+    )
+    db.add(addInventoryRequest)
+    newTransactionRequest = models.Transaction(
+        provider_type=0,
+        provider_id=user_id,
+        reciever_type=2,
+        reciever_id=product_id
+    )
+    db.add(newTransactionRequest)
+    db.commit()
+    return True
+
+
 def list_machine(db: Session, page: int, sort: int, count: int):
     q = db.query(models.Machine)
+    machine_count = db.query(models.Product).count()
     sortDict = {
         1: desc(models.Machine.id),
         2: asc(models.Machine.id),
@@ -240,7 +289,7 @@ def list_machine(db: Session, page: int, sort: int, count: int):
         sort = 1
     q = q.order_by(sortDict[sort])
     q = q.limit(count).offset(page*count).all()
-    return q
+    return q, machine_count
 
 
 def create_machine(db: Session, name: str, products: List[int]):
@@ -329,6 +378,7 @@ def delete_machine(db: Session, id: int):
 
 def list_airdrop(db: Session, page: int, sort: int, count: int):
     q = db.query(models.Airdrop)
+    airdrop_count = db.query(models.Airdrop).count()
     sortDict = {
         1: desc(models.Airdrop.id),
         2: asc(models.Airdrop.id),
@@ -339,7 +389,7 @@ def list_airdrop(db: Session, page: int, sort: int, count: int):
         sort = 1
     q = q.order_by(sortDict[sort])
     q = q.limit(count).offset(page*count).all()
-    return q
+    return q, airdrop_count
 
 
 def create_airdrop(
@@ -385,11 +435,11 @@ def put_airdrop(
     id: int,
     name: str = "",
     description: str = "",
-    amount: int = 0,
-    interval: int = 0
+    amount: int = -1,
+    interval: int = -1
 ):
     # パラメータ確認
-    if name == description and not amount and not interval:
+    if name == description and amount == -1 and interval == -1:
         raise HTTPException(
             status_code=400,
             detail="Invalid request"
@@ -410,9 +460,9 @@ def put_airdrop(
         airdrop_update.name = name
     if description:
         airdrop_update.description = description
-    if amount:
+    if amount != -1:
         airdrop_update.amount = amount
-    if interval:
+    if interval != -1:
         airdrop_update.interval = interval
     db.commit()
     return True
@@ -434,7 +484,53 @@ def delete_airdrop(db: Session, id: int):
     return True
 
 
-def list_transactions(
+def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
+    isExist = db.query(models.User.id).filter_by(
+        id=user_id
+    ).scalar() is not None
+    if not isExist:
+        raise HTTPException(
+            status_code=404,
+            detail="The user is not exist"
+        )
+    isExist = db.query(models.Airdrop.id).filter_by(
+        id=airdrop_id
+    ).scalar() is not None
+    if not isExist:
+        raise HTTPException(
+            status_code=404,
+            detail="The airdrop is not exist"
+        )
+    user = db.query(models.User).filter(
+        models.User.id == user_id
+    ).first()
+    airdrop = db.query(models.Airdrop).filter(
+        models.Airdrop.id == airdrop_id
+    ).first()
+    last_transaction = db.query(models.Transaction).filter(
+        models.Transaction.provider_type == 1,
+        models.Transaction.provider_id == airdrop_id
+    ).first()
+    if last_transaction:
+        recievable_date = datetime.datetime.now() + datetime.timedelta(minutes=airdrop.interval)
+        if last_transaction.reception < recievable_date:
+            raise HTTPException(
+                status_code=429,
+                detail="The airdrop can not recieve for now."
+            )
+    user.money += airdrop.amount
+    newTransactionRequest = models.Transaction(
+        provider_type=1,
+        provider_id=airdrop_id,
+        reciever_type=0,
+        reciever_id=user_id
+    )
+    db.add(newTransactionRequest)
+    db.commit()
+    return True
+
+
+def list_transaction(
     db: Session,
     user_id: int,
     page: int,
@@ -443,17 +539,57 @@ def list_transactions(
 ):
     q = db.query(models.Transaction).filter(
          or_(
-             models.Transaction.provider == user_id,
+             and_(
+                models.Transaction.provider == user_id,
+                models.Transaction.provider_type == 0
+             ),
+             and_(
+                models.Transaction.reciever == user_id,
+                models.Transaction.reciever_type == 0
+             )
          )
     )
+    transaction_count = q.count()
     sortDict = {
-        1: desc(models.Airdrop.id),
-        2: asc(models.Airdrop.id),
-        3: desc(models.Airdrop.name),
-        4: asc(models.Airdrop.name)
+        1: desc(models.Transaction.id),
+        2: asc(models.Transaction.id)
     }
-    if sort > 4:
+    if sort > 2:
         sort = 1
     q = q.order_by(sortDict[sort])
     q = q.limit(count).offset(page*count).all()
-    return q
+    return q, transaction_count
+
+
+def create_transaction(
+    db: Session,
+    provider_type: int,
+    provider_id: int,
+    reciever_type: int,
+    reciever_id: int
+):
+    newTransactionRequest = models.Transaction(
+        provider_type=provider_type,
+        provider_id=provider_id,
+        reciever_type=reciever_type,
+        reciever_id=reciever_id
+    )
+    db.add(newTransactionRequest)
+    db.commit()
+    return True
+
+
+def delete_transaction(db: Session, id: int):
+    isExist = db.query(models.Transaction.transaction_id).filter_by(
+        transaction_id=id
+    ).scalar() is not None
+    if not isExist:
+        raise HTTPException(
+            status_code=404,
+            detail="The transaction is not exist"
+        )
+    db.query(models.Transaction).filter(
+        models.Transaction.id == id
+    ).delete()
+    db.commit()
+    return True
