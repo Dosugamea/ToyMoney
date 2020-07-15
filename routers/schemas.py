@@ -42,9 +42,9 @@ class Machine(BaseModel):
 
 
 class MachineCreateRequest(BaseModel):
-    name: str = constr(max_length=63)
-    description: str = constr(max_length=300)
-    products: List[Product]
+    name: constr(max_length=63)
+    description: constr(max_length=300)
+    products: List[int]
 
     class Config:
         orm_mode = True

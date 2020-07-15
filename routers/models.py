@@ -20,7 +20,10 @@ class Product(Base):
     price = Column(Integer)
 
     def __repr__(self):
-        return f"<Wallet(id={self.id}, name={self.name}, money={self.money})>"
+        return f"""<Product(id={self.id},
+        name={self.name},
+        description={self.description},
+        price={self.price})>"""
 
 
 class UserInventory(Base):

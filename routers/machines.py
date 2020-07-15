@@ -15,6 +15,12 @@ async def get_machines(
     count: int = 20,
     db: Session = Depends(session)
 ):
+    # TODO: LEFT JOIN とかでproductのDBと統合した結果をもらってくる
+    '''
+        "name": p.name,
+        "description": p.description,
+        "price": p.price
+    '''
     machines, total = crud.list_machine(db, page, sort, count)
     machines = [
         {
@@ -23,10 +29,7 @@ async def get_machines(
             "description": m.description,
             "products": [
                 {
-                    "id": p.id,
-                    "name": p.name,
-                    "description": p.description,
-                    "price": p.price
+                    "id": p.product_id
                 }
                 for p in m.products
             ]
@@ -47,10 +50,17 @@ async def get_machines(
 
 @router.post('/create')
 async def create_machine_as_admin(
-    user: dict = Depends(verify_admin),
+    machine: schemas.MachineCreateRequest,
+    admin: dict = Depends(verify_admin),
     db: Session = Depends(session)
 ):
-    return {"text": "hello world!"}
+    crud.create_machine(
+        db,
+        machine.name,
+        machine.description,
+        machine.products
+    )
+    return {"text": "ok"}
 
 
 @router.get('/{machine_id}')
@@ -69,10 +79,7 @@ async def get_machine(
         "description": machine.description,
         "products": [
             {
-                "id": p.id,
-                "name": p.name,
-                "description": p.description,
-                "price": p.price
+                "id": p.product_id
             }
             for p in machine.products
         ]

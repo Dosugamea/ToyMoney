@@ -33,7 +33,6 @@ async def verify_token(
         )
     try:
         userData = token_serializer.loads(authorization.split("Bearer ")[1])
-        print(userData)
     except:
         raise HTTPException(
             status_code=401,
@@ -57,8 +56,37 @@ async def verify_token(
     return userData
 
 
-async def verify_admin():
-    userData = verify_token()
+async def verify_admin(
+    db: Session = Depends(session),
+    authorization: str = Header(None)
+):
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header was not presented"
+        )
+    try:
+        userData = token_serializer.loads(authorization.split("Bearer ")[1])
+    except:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization"
+        )
+    if 'id' not in userData:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization"
+        )
+    isExist = db.query(User).filter_by(
+        id=userData['id'],
+        authorization_seq=userData['seq'],
+        is_admin=userData['is_admin']
+    ).scalar() is not None
+    if not isExist:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization"
+        )
     if not userData["is_admin"]:
         raise HTTPException(
             status_code=401,

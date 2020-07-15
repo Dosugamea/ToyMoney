@@ -8,7 +8,7 @@ USERNAME = ''
 PASSWORD = ''
 HOST_IP = ''
 DB_NAME = 'TOYMONEY'
-ECHO = True
+ECHO = False
 
 if DB_TYPE == 'mysql':
     DATABASE = f'mysql://{USERNAME}:{PASSWORD}@{HOST_IP}/{DB_NAME}?charset=utf8'
@@ -18,6 +18,7 @@ else:
 engine = create_engine(
     DATABASE,
     encoding="utf-8",
+    connect_args={"check_same_thread": False},
     echo=ECHO
 )
 

@@ -22,7 +22,7 @@ def list_user(db: Session, page: int, sort: int, count: int):
     if sort > 6:
         sort = 1
     q = q.order_by(sortDict[sort])
-    q = q.limit(count).offset(page*count).all()
+    q = q.limit(count).offset((page-1)*count).all()
     return q, user_count
 
 
@@ -139,7 +139,7 @@ def list_product(db: Session, page: int, sort: int, count: int):
     if sort > 6:
         sort = 1
     q = q.order_by(sortDict[sort])
-    q = q.limit(count).offset(page*count).all()
+    q = q.limit(count).offset((page-1)*count).all()
     return q, product_count
 
 
@@ -288,11 +288,11 @@ def list_machine(db: Session, page: int, sort: int, count: int):
     if sort > 4:
         sort = 1
     q = q.order_by(sortDict[sort])
-    q = q.limit(count).offset(page*count).all()
+    q = q.limit(count).offset((page-1)*count).all()
     return q, machine_count
 
 
-def create_machine(db: Session, name: str, products: List[int]):
+def create_machine(db: Session, name: str, description: str, products: List[int]):
     isExist = db.query(models.Machine.id).filter_by(
         name=name
     ).scalar() is not None
@@ -301,11 +301,16 @@ def create_machine(db: Session, name: str, products: List[int]):
             status_code=400,
             detail="The machine name is already used"
         )
-    productList = db.query(models.Product).filter(
-        models.Product.id.in_(products)
-    ).all()
+    productList = [
+        models.MachineInventory(
+            product_id=p
+        )
+        for p in products
+    ]
+    print(productList)
     newMachineRequest = models.Machine(
         name=name,
+        description=description,
         products=productList
     )
     db.add(newMachineRequest)
@@ -388,7 +393,7 @@ def list_airdrop(db: Session, page: int, sort: int, count: int):
     if sort > 4:
         sort = 1
     q = q.order_by(sortDict[sort])
-    q = q.limit(count).offset(page*count).all()
+    q = q.limit(count).offset((page-1)*count).all()
     return q, airdrop_count
 
 
@@ -557,7 +562,7 @@ def list_transaction(
     if sort > 2:
         sort = 1
     q = q.order_by(sortDict[sort])
-    q = q.limit(count).offset(page*count).all()
+    q = q.limit(count).offset((page-1)*count).all()
     return q, transaction_count
 
 

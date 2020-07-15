@@ -128,6 +128,7 @@ async def get_user_account_list(
         sort,
         count
     )
+    print(users)
     users = [
         {
             "id": t.id,
