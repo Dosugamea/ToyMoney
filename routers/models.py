@@ -110,6 +110,7 @@ class Transaction(Base):
     provider = Column(Integer)
     reciever_type = Column(Integer)
     reciever = Column(Integer)
+    amount = Column(Integer)
     message = Column(String(280))
 
     def __repr__(self):
@@ -120,6 +121,7 @@ class Transaction(Base):
         provider={self.provider},
         reciever_type={self.reciever_type},
         reciever={self.reciever},
+        amount={self.amount},
         message={self.message})>"""
 
 

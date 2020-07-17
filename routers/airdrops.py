@@ -103,4 +103,5 @@ async def claim_airdrop(
     user: dict = Depends(verify_token),
     db: Session = Depends(session)
 ):
+    crud.claim_airdrop(db, airdrop_id, user['id'])
     return {"text": "ok"}

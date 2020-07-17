@@ -275,9 +275,10 @@ def buy_product(db: Session, user_id: int, product_id: int):
     db.add(addInventoryRequest)
     newTransactionRequest = models.Transaction(
         provider_type=0,
-        provider_id=user_id,
+        provider=user_id,
         reciever_type=2,
-        reciever_id=product_id
+        reciever=product_id,
+        amount=product.price
     )
     db.add(newTransactionRequest)
     db.commit()
@@ -530,7 +531,7 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
     ).first()
     last_transaction = db.query(models.Transaction).filter(
         models.Transaction.provider_type == 1,
-        models.Transaction.provider_id == airdrop_id
+        models.Transaction.provider == airdrop_id
     ).first()
     if last_transaction:
         recievable_date = datetime.datetime.now() + datetime.timedelta(minutes=airdrop.interval)
@@ -542,9 +543,10 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
     user.money += airdrop.amount
     newTransactionRequest = models.Transaction(
         provider_type=1,
-        provider_id=airdrop_id,
+        provider=airdrop_id,
         reciever_type=0,
-        reciever_id=user_id
+        reciever=user_id,
+        amount=airdrop.amount
     )
     db.add(newTransactionRequest)
     db.commit()

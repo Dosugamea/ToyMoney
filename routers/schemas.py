@@ -95,6 +95,7 @@ class Transaction(BaseModel):
     reception: datetime
     provider: int
     reciever: int
+    amount: int
     message: constr(max_length=100)
 
     class Config:
