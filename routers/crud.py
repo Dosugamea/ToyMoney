@@ -64,7 +64,15 @@ def get_user(db: Session, user_id: int):
             status_code=404,
             detail="The user is not exist"
         )
-    return db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    user_inventory = db.query(
+        models.Product
+    ).join(
+        models.UserInventory
+    ).filter(
+        models.UserInventory.user_id == user_id
+    ).all()
+    return user, user_inventory
 
 
 def put_user(
@@ -327,7 +335,15 @@ def get_machine(db: Session, id: int):
             status_code=404,
             detail="The machine is not exist"
         )
-    return db.query(models.Machine).filter(models.Machine.id == id).first()
+    machine = db.query(models.Machine).filter(models.Machine.id == id).first()
+    machine_inventory = db.query(
+        models.Product
+    ).join(
+        models.MachineInventory
+    ).filter(
+        models.MachineInventory.machine_id == id
+    ).all()
+    return machine, machine_inventory
 
 
 def put_machine(

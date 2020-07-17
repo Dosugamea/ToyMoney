@@ -15,24 +15,12 @@ async def get_machines(
     count: int = 20,
     db: Session = Depends(session)
 ):
-    # TODO: LEFT JOIN とかでproductのDBと統合した結果をもらってくる
-    '''
-        "name": p.name,
-        "description": p.description,
-        "price": p.price
-    '''
     machines, total = crud.list_machine(db, page, sort, count)
     machines = [
         {
             "id": m.id,
             "name": m.name,
-            "description": m.description,
-            "products": [
-                {
-                    "id": p.product_id
-                }
-                for p in m.products
-            ]
+            "description": m.description
         }
         for m in machines
     ]
@@ -68,7 +56,7 @@ async def get_machine(
     machine_id: int,
     db: Session = Depends(session)
 ):
-    machine = crud.get_machine(
+    machine, products = crud.get_machine(
         db,
         machine_id
     )
@@ -79,9 +67,12 @@ async def get_machine(
         "description": machine.description,
         "products": [
             {
-                "id": p.product_id
+                "id": p.id,
+                "name": p.name,
+                "description": p.description,
+                "price": p.price
             }
-            for p in machine.products
+            for p in products
         ]
     }
 

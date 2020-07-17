@@ -22,12 +22,15 @@ async def get_assets(
     user: dict = Depends(verify_token),
     db: Session = Depends(session)
 ):
-    user = crud.get_user(db, user['id'])
+    _, inventories = crud.get_user(db, user['id'])
     inventories = [
         {
-            "product_id": p.id
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "price": p.price
         }
-        for p in user.inventories
+        for p in inventories
     ]
     return {"text": "ok", "assets": inventories}
 
@@ -128,7 +131,6 @@ async def get_user_account_list(
         sort,
         count
     )
-    print(users)
     users = [
         {
             "id": t.id,
@@ -193,7 +195,7 @@ async def delete_user_account_as_admin(
     return {"text": "ok"}
 
 
-@router.get('/{user_id}', response_model=schemas.User)
+@router.get('/{user_id}')
 async def get_user(
     user_id: str,
     db: Session = Depends(session)
