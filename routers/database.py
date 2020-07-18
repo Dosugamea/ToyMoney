@@ -3,11 +3,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from .models import Base
 
 # Database setting
-DB_TYPE = 'sqlite'
-USERNAME = ''
-PASSWORD = ''
-HOST_IP = ''
-DB_NAME = 'TOYMONEY'
+SALT = "UNSAFE_SECRET_KEY"
 ECHO = False
 
 if DB_TYPE == 'mysql':
