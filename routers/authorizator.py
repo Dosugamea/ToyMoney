@@ -1,11 +1,10 @@
 from itsdangerous import JSONWebSignatureSerializer as Serializer
 from fastapi import Header, HTTPException, Depends
 from sqlalchemy.orm import Session
-from .database import session
+from .database import session, SALT
 from .models import User
 
 
-SALT = "UNSAFE_SECRET_KEY"
 token_serializer = Serializer(SALT)
 
 

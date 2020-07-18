@@ -3,7 +3,8 @@ from sqlalchemy.sql import text, desc, asc, or_, and_
 from fastapi import HTTPException
 from typing import List
 from . import models, schemas
-from .authorizator import SALT, generate_token
+from .database import SALT
+from .authorizator import generate_token
 from hashlib import sha256
 import datetime
 import random
@@ -25,6 +26,31 @@ def list_user(db: Session, page: int, sort: int, count: int):
     q = q.order_by(sortDict[sort])
     q = q.limit(count).offset((page-1)*count).all()
     return q, user_count
+
+
+def create_admin(db: Session, name: str, password: str):
+    # 重複するアカウント禁止
+    isExist = db.query(models.User.id).filter_by(
+        name=name
+    ).scalar() is not None
+    if isExist:
+        raise Exception("The name is already in use.")
+    # 新規ユーザー作成
+    newUserRequest = models.User(
+        name=name,
+        password=sha256(
+            (SALT + password).encode("utf-8")
+        ).hexdigest(),
+        is_admin=1
+    )
+    db.add(newUserRequest)
+    db.commit()
+    # トークン作成
+    newUser = db.query(models.User.id).filter_by(
+        name=name
+    ).first()
+    token = generate_token(db, newUser.id)
+    return token
 
 
 def create_user(db: Session, new_user: schemas.UserCreateRequest):

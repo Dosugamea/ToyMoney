@@ -12,9 +12,13 @@ ECHO = False
 
 if DB_TYPE == 'mysql':
     DATABASE = f'mysql://{USERNAME}:{PASSWORD}@{HOST_IP}/{DB_NAME}?charset=utf8'
+    engine = create_engine(
+        DATABASE,
+        encoding="utf-8",
+        echo=ECHO
+    )
 else:
     DATABASE = f'sqlite:///{DB_NAME}.sqlite3'
-
 engine = create_engine(
     DATABASE,
     encoding="utf-8",
