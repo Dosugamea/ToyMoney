@@ -8,12 +8,12 @@ from .models import User
 token_serializer = Serializer(SALT)
 
 
-def generate_token(db: Session, id: str):
+def generate_token(db: Session, id: str, is_admin: int):
     targetUser = db.query(User).filter(User.id == id).first()
     token = token_serializer.dumps({
         'id': id,
         'seq': targetUser.authorization_seq + 1,
-        'is_admin': 0
+        'is_admin': is_admin
     }).decode('utf-8')
     targetUser.authorization_key = token
     targetUser.authorization_seq += 1

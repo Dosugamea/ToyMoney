@@ -49,7 +49,7 @@ def create_admin(db: Session, name: str, password: str):
     newUser = db.query(models.User.id).filter_by(
         name=name
     ).first()
-    token = generate_token(db, newUser.id)
+    token = generate_token(db, newUser.id, 1)
     return token
 
 
@@ -78,7 +78,7 @@ def create_user(db: Session, new_user: schemas.UserCreateRequest):
         name=new_user.name
     ).first()
     print(newUser)
-    token = generate_token(db, newUser.id)
+    token = generate_token(db, newUser.id, 0)
     return token
 
 
@@ -444,6 +444,64 @@ def list_airdrop(db: Session, page: int, sort: int, count: int):
     q = q.order_by(sortDict[sort])
     q = q.limit(count).offset((page-1)*count).all()
     return q, airdrop_count
+
+
+def list_airdrop_with_stat(db: Session, page: int, sort: int, count: int):
+    q = db.query(models.Airdrop)
+    airdrop_count = db.query(models.Airdrop).count()
+    sortDict = {
+        1: desc(models.Airdrop.id),
+        2: asc(models.Airdrop.id),
+        3: desc(models.Airdrop.name),
+        4: asc(models.Airdrop.name)
+    }
+    if sort > 4:
+        sort = 1
+    q = q.order_by(sortDict[sort])
+    q = q.limit(count).offset((page - 1) * count).all()
+    resp = []
+    # Javascriptを想定して "2008-05-01T02:00:00+09:00" という型にする
+    requested_date = datetime.datetime.now()
+    for airdrop in q:
+        data = {
+            "id": airdrop.id,
+            "name": airdrop.name,
+            "description": airdrop.description,
+            "amount": airdrop.amount,
+            "interval": airdrop.interval,
+            "receivable": True,
+            "next_receivable": requested_date.strftime(
+                '%Y-%m-%dT%H:%M:%S+09:00'
+            )
+        }
+        last_transaction = db.query(models.Transaction).filter(
+            models.Transaction.provider_type == 1,
+            models.Transaction.provider == airdrop.id
+        ).first()
+        if last_transaction:
+            # 次に受け取れる日時
+            receivable_date = last_transaction.reception
+            # 要求日時
+            # 経過した分数を見る
+            if airdrop.mode == 0:
+                receivable_date += datetime.timedelta(minutes=airdrop.interval)
+            # 経過した日数を見る
+            else:
+                receivable_date += datetime.timedelta(days=airdrop.interval)
+                receivable_date = receivable_date.replace(
+                    hour=0,
+                    minute=0,
+                    second=0,
+                    microsecond=0
+                )
+            # 要求した時刻が 受け取りできる時刻以下ならエラー
+            if requested_date < receivable_date:
+                data["receivable"] = False
+                data["next_receivable"] = receivable_date.strftime(
+                    '%Y-%m-%dT%H:%M:%S+09:00'
+                )
+        resp.append(data)
+    return resp, airdrop_count
 
 
 def create_airdrop(

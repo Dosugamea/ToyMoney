@@ -38,6 +38,27 @@ async def get_airdrops(
     }
 
 
+@router.get('/list_with_status')
+async def get_airdrop_status(
+    page: int = 1,
+    sort: int = 1,
+    count: int = 20,
+    user: dict = Depends(verify_token),
+    db: Session = Depends(session)
+):
+    airdrops, total = crud.list_airdrop_with_stat(db, page, sort, count)
+    pages, extra = divmod(total, count)
+    if extra:
+        pages += 1
+    return {
+        "text": "ok",
+        "airdrops": airdrops,
+        "pages": pages,
+        "current": page,
+        "total": total
+    }
+
+
 @router.post('/create')
 async def create_airdrop_as_admin(
     airdrop: schemas.AirdropCreateRequest,
