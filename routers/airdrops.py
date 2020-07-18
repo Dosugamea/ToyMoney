@@ -49,7 +49,8 @@ async def create_airdrop_as_admin(
         airdrop.name,
         airdrop.description,
         airdrop.amount,
-        airdrop.interval
+        airdrop.interval,
+        airdrop.mode
     )
     return {"text": "ok"}
 
@@ -66,7 +67,8 @@ async def get_airdrop(
         "name": airdrop.name,
         "description": airdrop.description,
         "amount": airdrop.amount,
-        "interval": airdrop.interval
+        "interval": airdrop.interval,
+        "mode": airdrop.mode
     }
 
 
@@ -82,7 +84,8 @@ async def set_airdrop_info_as_admin(
         airdrop.name,
         airdrop.description,
         airdrop.amount,
-        airdrop.interval
+        airdrop.interval,
+        airdrop.mode
     )
     return {"text": "ok"}
 
@@ -103,5 +106,5 @@ async def claim_airdrop(
     user: dict = Depends(verify_token),
     db: Session = Depends(session)
 ):
-    crud.claim_airdrop(db, airdrop_id, user['id'])
-    return {"text": "ok"}
+    _, before, after = crud.claim_airdrop(db, airdrop_id, user['id'])
+    return {"text": "ok", "before": before, "after": after}

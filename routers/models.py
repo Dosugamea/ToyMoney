@@ -63,12 +63,14 @@ class Airdrop(Base):
     description = Column(String(300))
     amount = Column(Integer)
     interval = Column(Integer)
+    mode = Column(Integer)
 
     def __repr__(self):
         return f"""<Airdrop(id={self.id},
         name={self.name},
         description={self.description},
         amount={self.amount},
+        mode={self.mode},
         interval={self.interval}>"""
 
 

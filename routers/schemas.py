@@ -65,6 +65,7 @@ class Airdrop(BaseModel):
     description: constr(max_length=300)
     amount: int
     interval: int
+    mode: int
 
     class Config:
         orm_mode = True
@@ -75,6 +76,7 @@ class AirdropCreateRequest(BaseModel):
     description: constr(max_length=300)
     amount: int
     interval: int
+    mode: int
 
     class Config:
         orm_mode = True
@@ -85,6 +87,7 @@ class AirdropEditRequest(BaseModel):
     description: Optional[str] = constr(max_length=300)
     amount: Optional[int] = -1
     interval: Optional[int] = -1
+    mode: Optional[int] = -1
 
     class Config:
         orm_mode = True

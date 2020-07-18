@@ -6,6 +6,7 @@ from . import models, schemas
 from .authorizator import SALT, generate_token
 from hashlib import sha256
 import datetime
+import random
 
 
 def list_user(db: Session, page: int, sort: int, count: int):
@@ -301,7 +302,12 @@ def list_machine(db: Session, page: int, sort: int, count: int):
     return q, machine_count
 
 
-def create_machine(db: Session, name: str, description: str, products: List[int]):
+def create_machine(
+    db: Session,
+    name: str,
+    description: str,
+    products: List[int]
+):
     isExist = db.query(models.Machine.id).filter_by(
         name=name
     ).scalar() is not None
@@ -419,7 +425,8 @@ def create_airdrop(
     name: str,
     description: str,
     amount: int,
-    interval: int
+    interval: int,
+    mode: int
 ):
     isExist = db.query(models.Airdrop.id).filter_by(
         name=name
@@ -433,7 +440,8 @@ def create_airdrop(
         name=name,
         description=description,
         amount=amount,
-        interval=interval
+        interval=interval,
+        mode=mode
     )
     db.add(newAirdropRequest)
     db.commit()
@@ -458,10 +466,11 @@ def put_airdrop(
     name: str = "",
     description: str = "",
     amount: int = -1,
-    interval: int = -1
+    interval: int = -1,
+    mode: int = -1
 ):
     # パラメータ確認
-    if name == description and amount == -1 and interval == -1:
+    if name == description and amount == -1 and interval == -1 and mode == -1:
         raise HTTPException(
             status_code=400,
             detail="Invalid request"
@@ -486,6 +495,8 @@ def put_airdrop(
         airdrop_update.amount = amount
     if interval != -1:
         airdrop_update.interval = interval
+    if mode != -1:
+        airdrop_update.mode = mode
     db.commit()
     return True
 
@@ -533,14 +544,44 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
         models.Transaction.provider_type == 1,
         models.Transaction.provider == airdrop_id
     ).first()
+    before_money = user.money
     if last_transaction:
-        recievable_date = datetime.datetime.now() + datetime.timedelta(minutes=airdrop.interval)
-        if last_transaction.reception < recievable_date:
+        # 次に受け取れる日時
+        receivable_date = last_transaction.reception
+        # 要求日時
+        requested_date = datetime.datetime.now()
+        # 経過した分数を見る
+        if airdrop.mode == 0:
+            receivable_date += datetime.timedelta(minutes=airdrop.interval)
+        # 経過した日数を見る
+        else:
+            receivable_date += datetime.timedelta(days=airdrop.interval)
+            receivable_date = receivable_date.replace(
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0
+            )
+        # 要求した時刻が 受け取りできる時刻以下ならエラー
+        if requested_date < receivable_date:
             raise HTTPException(
                 status_code=429,
                 detail="The airdrop can not recieve for now."
             )
-    user.money += airdrop.amount
+    # Normal
+    if airdrop.mode < 2:
+        user.money += airdrop.amount
+    # Gacha1
+    elif airdrop.mode == 2:
+        prizes = [1, 2, 5, 10]
+        weight = [73, 20, 5, 2]
+        user.money += random.choices(prizes, weight, k=1)[0]
+    # Gacha2
+    else:
+        prizes = [5, 10, 20, 30]
+        weight = [85, 10, 4, 1]
+        user.money += random.choices(prizes, weight, k=1)[0]
+    after_money = user.money
     newTransactionRequest = models.Transaction(
         provider_type=1,
         provider=airdrop_id,
@@ -550,7 +591,7 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
     )
     db.add(newTransactionRequest)
     db.commit()
-    return True
+    return True, before_money, after_money
 
 
 def list_transaction(
