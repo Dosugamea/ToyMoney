@@ -82,7 +82,7 @@ def create_user(db: Session, new_user: schemas.UserCreateRequest):
     return token
 
 
-def get_user(db: Session, user_id: int):
+def get_user(db: Session, user_id: int, with_inventory: bool):
     isExist = db.query(models.User.id).filter_by(
         id=user_id
     ).scalar() is not None
@@ -92,14 +92,16 @@ def get_user(db: Session, user_id: int):
             detail="The user is not exist"
         )
     user = db.query(models.User).filter(models.User.id == user_id).first()
-    user_inventory = db.query(
-        models.Product
-    ).join(
-        models.UserInventory
-    ).filter(
-        models.UserInventory.user_id == user_id
-    ).all()
-    return user, user_inventory
+    if with_inventory:
+        user_inventory = db.query(
+            models.Product
+        ).join(
+            models.UserInventory
+        ).filter(
+            models.UserInventory.user_id == user_id
+        ).all()
+        return user, user_inventory
+    return user
 
 
 def put_user(
@@ -709,24 +711,25 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
             )
     # 0/1: Normal
     if airdrop.mode < 2:
-        user.money += airdrop.amount
+        transaction_amount = airdrop.amount
     # 2: Gacha1
     elif airdrop.mode == 2:
         prizes = [1, 2, 5, 10]
         weight = [73, 20, 5, 2]
-        user.money += random.choices(prizes, weight, k=1)[0]
+        transaction_amount = random.choices(prizes, weight, k=1)[0]
     # 3: Gacha2
     else:
         prizes = [5, 10, 20, 30]
         weight = [85, 10, 4, 1]
-        user.money += random.choices(prizes, weight, k=1)[0]
+        transaction_amount = random.choices(prizes, weight, k=1)[0]
+    user.money += transaction_amount
     after_money = user.money
     newTransactionRequest = models.Transaction(
         provider_type=1,
         provider=airdrop_id,
         reciever_type=0,
         reciever=user_id,
-        amount=airdrop.amount
+        amount=transaction_amount
     )
     db.add(newTransactionRequest)
     db.commit()

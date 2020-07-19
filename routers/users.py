@@ -22,7 +22,7 @@ async def get_assets(
     user: dict = Depends(verify_token),
     db: Session = Depends(session)
 ):
-    _, inventories = crud.get_user(db, user['id'])
+    user, inventories = crud.get_user(db, user['id'], True)
     inventories = [
         {
             "id": p.id,
@@ -32,7 +32,16 @@ async def get_assets(
         }
         for p in inventories
     ]
-    return {"text": "ok", "assets": inventories}
+    return {"text": "ok", "money": user.money, "assets": inventories}
+
+
+@router.get('/money')
+async def get_money(
+    user: dict = Depends(verify_token),
+    db: Session = Depends(session)
+):
+    user = crud.get_user(db, user['id'], False)
+    return {"text": "ok", "money": user.money}
 
 
 @router.get('/transactions')
@@ -53,11 +62,12 @@ async def get_user_transactions(
     transactions = [
         {
             "id": t.id,
+            "amount": t.amount,
             "reception": t.reception,
             "provider_type": t.provider_type,
-            "provider_id": t.provider_id,
+            "provider": t.provider,
             "reciever_type": t.reciever_type,
-            "reciever_id": t.reciever_id
+            "reciever": t.reciever,
         }
         for t in transactions
     ]
