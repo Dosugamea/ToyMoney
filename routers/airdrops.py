@@ -46,7 +46,13 @@ async def get_airdrop_status(
     user: dict = Depends(verify_token),
     db: Session = Depends(session)
 ):
-    airdrops, total = crud.list_airdrop_with_stat(db, page, sort, count)
+    airdrops, total = crud.list_airdrop_with_stat(
+        db,
+        page,
+        sort,
+        count,
+        user["id"]
+    )
     pages, extra = divmod(total, count)
     if extra:
         pages += 1
@@ -91,6 +97,16 @@ async def get_airdrop(
         "interval": airdrop.interval,
         "mode": airdrop.mode
     }
+
+
+@router.get('/{airdrop_id}/status')
+async def get_airdrop_with_stat(
+    airdrop_id: int,
+    user: dict = Depends(verify_token),
+    db: Session = Depends(session)
+):
+    airdrop_data = crud.get_airdrop_with_stat(db, airdrop_id, user["id"])
+    return airdrop_data
 
 
 @router.put('/{airdrop_id}')

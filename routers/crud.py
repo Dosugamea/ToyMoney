@@ -446,7 +446,7 @@ def list_airdrop(db: Session, page: int, sort: int, count: int):
     return q, airdrop_count
 
 
-def list_airdrop_with_stat(db: Session, page: int, sort: int, count: int):
+def list_airdrop_with_stat(db: Session, page: int, sort: int, count: int, user_id: int):
     q = db.query(models.Airdrop)
     airdrop_count = db.query(models.Airdrop).count()
     sortDict = {
@@ -476,7 +476,9 @@ def list_airdrop_with_stat(db: Session, page: int, sort: int, count: int):
         }
         last_transaction = db.query(models.Transaction).filter(
             models.Transaction.provider_type == 1,
-            models.Transaction.provider == airdrop.id
+            models.Transaction.provider == airdrop.id,
+            models.Transaction.reciever_type == 0,
+            models.Transaction.reciever == user_id
         ).first()
         if last_transaction:
             # 次に受け取れる日時
@@ -543,6 +545,59 @@ def get_airdrop(db: Session, id: int):
         )
     return db.query(models.Airdrop).filter(models.Airdrop.id == id).first()
 
+
+def get_airdrop_with_stat(db: Session, id: int, user_id: int):
+    isExist = db.query(models.Airdrop.id).filter_by(
+        id=id
+    ).scalar() is not None
+    if not isExist:
+        raise HTTPException(
+            status_code=404,
+            detail="The airdrop is not exist"
+        )
+    requested_date = datetime.datetime.now()
+    airdrop = db.query(models.Airdrop).filter(models.Airdrop.id == id).first()
+    data = {
+        "text": "ok",
+        "id": airdrop.id,
+        "name": airdrop.name,
+        "description": airdrop.description,
+        "amount": airdrop.amount,
+        "interval": airdrop.interval,
+        "receivable": True,
+        "next_receivable": requested_date.strftime(
+            '%Y-%m-%dT%H:%M:%S+09:00'
+        )
+    }
+    last_transaction = db.query(models.Transaction).filter(
+        models.Transaction.provider_type == 1,
+        models.Transaction.provider == airdrop.id,
+        models.Transaction.reciever_type == 0,
+        models.Transaction.reciever == user_id
+    ).first()
+    if last_transaction:
+        # 次に受け取れる日時
+        receivable_date = last_transaction.reception
+        # 要求日時
+        # 経過した分数を見る
+        if airdrop.mode == 0:
+            receivable_date += datetime.timedelta(minutes=airdrop.interval)
+        # 経過した日数を見る
+        else:
+            receivable_date += datetime.timedelta(days=airdrop.interval)
+            receivable_date = receivable_date.replace(
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0
+            )
+        # 要求した時刻が 受け取りできる時刻以下ならエラー
+        if requested_date < receivable_date:
+            data["receivable"] = False
+            data["next_receivable"] = receivable_date.strftime(
+                '%Y-%m-%dT%H:%M:%S+09:00'
+            )
+    return data
 
 def put_airdrop(
     db: Session,
@@ -634,11 +689,11 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
         receivable_date = last_transaction.reception
         # 要求日時
         requested_date = datetime.datetime.now()
-        # 経過した分数を見る
+        # 0: 経過した分数を見る
         if airdrop.mode == 0:
             receivable_date += datetime.timedelta(minutes=airdrop.interval)
-        # 経過した日数を見る
-        else:
+        # 1/2 : 経過した日数を見る
+        elif airdrop.mode < 3:
             receivable_date += datetime.timedelta(days=airdrop.interval)
             receivable_date = receivable_date.replace(
                 hour=0,
@@ -652,15 +707,15 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
                 status_code=429,
                 detail="The airdrop can not recieve for now."
             )
-    # Normal
+    # 0/1: Normal
     if airdrop.mode < 2:
         user.money += airdrop.amount
-    # Gacha1
+    # 2: Gacha1
     elif airdrop.mode == 2:
         prizes = [1, 2, 5, 10]
         weight = [73, 20, 5, 2]
         user.money += random.choices(prizes, weight, k=1)[0]
-    # Gacha2
+    # 3: Gacha2
     else:
         prizes = [5, 10, 20, 30]
         weight = [85, 10, 4, 1]

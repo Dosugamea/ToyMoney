@@ -55,7 +55,6 @@ async def create_product_as_admin(
 @router.get('/{product_id}')
 async def get_product(
     product_id: int,
-    user: dict = Depends(verify_admin),
     db: Session = Depends(session)
 ):
     product = crud.get_product(
@@ -90,7 +89,7 @@ async def set_product_info_as_admin(
 @router.delete('/{product_id}')
 async def delete_product_as_admin(
     product_id: int,
-    user: dict = Depends(verify_admin),
+    admin: dict = Depends(verify_admin),
     db: Session = Depends(session)
 ):
     crud.delete_product(db, product_id)
