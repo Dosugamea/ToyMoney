@@ -98,7 +98,7 @@ class Transaction(Base):
     取引モデル
 
     provider_type 0: ユーザー 1: エアドロップ 2: 商品 3: 強制
-    reciever_type 0: ユーザー 1: エアドロップ 2: 商品 3: 強制
+    receiver_type 0: ユーザー 1: エアドロップ 2: 商品 3: 強制
     """
     __tablename__ = 'transactions'
 
@@ -110,8 +110,8 @@ class Transaction(Base):
     )
     provider_type = Column(Integer)
     provider = Column(Integer)
-    reciever_type = Column(Integer)
-    reciever = Column(Integer)
+    receiver_type = Column(Integer)
+    receiver = Column(Integer)
     amount = Column(Integer)
     message = Column(String(280))
 
@@ -121,8 +121,8 @@ class Transaction(Base):
         reception={self.reception.strftime('%Y-%m-%d %H:%M:%S')},
         provider_type={self.provider_type},
         provider={self.provider},
-        reciever_type={self.reciever_type},
-        reciever={self.reciever},
+        receiver_type={self.receiver_type},
+        receiver={self.receiver},
         amount={self.amount},
         message={self.message})>"""
 

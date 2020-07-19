@@ -66,8 +66,8 @@ async def get_user_transactions(
             "reception": t.reception,
             "provider_type": t.provider_type,
             "provider": t.provider,
-            "reciever_type": t.reciever_type,
-            "reciever": t.reciever,
+            "receiver_type": t.receiver_type,
+            "receiver": t.receiver,
         }
         for t in transactions
     ]

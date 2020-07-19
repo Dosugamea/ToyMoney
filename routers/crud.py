@@ -155,7 +155,7 @@ def delete_user(db: Session, id: int):
     db.query(models.Transaction).filter(
         or_(
             models.Transaction.provider == id,
-            models.Transaction.reciever == id
+            models.Transaction.receiver == id
         )
     ).delete()
     db.commit()
@@ -305,8 +305,8 @@ def buy_product(db: Session, user_id: int, product_id: int):
     newTransactionRequest = models.Transaction(
         provider_type=0,
         provider=user_id,
-        reciever_type=2,
-        reciever=product_id,
+        receiver_type=2,
+        receiver=product_id,
         amount=product.price
     )
     db.add(newTransactionRequest)
@@ -479,8 +479,8 @@ def list_airdrop_with_stat(db: Session, page: int, sort: int, count: int, user_i
         last_transaction = db.query(models.Transaction).filter(
             models.Transaction.provider_type == 1,
             models.Transaction.provider == airdrop.id,
-            models.Transaction.reciever_type == 0,
-            models.Transaction.reciever == user_id
+            models.Transaction.receiver_type == 0,
+            models.Transaction.receiver == user_id
         ).first()
         if last_transaction:
             # 次に受け取れる日時
@@ -574,8 +574,8 @@ def get_airdrop_with_stat(db: Session, id: int, user_id: int):
     last_transaction = db.query(models.Transaction).filter(
         models.Transaction.provider_type == 1,
         models.Transaction.provider == airdrop.id,
-        models.Transaction.reciever_type == 0,
-        models.Transaction.reciever == user_id
+        models.Transaction.receiver_type == 0,
+        models.Transaction.receiver == user_id
     ).first()
     if last_transaction:
         # 次に受け取れる日時
@@ -727,8 +727,8 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
     newTransactionRequest = models.Transaction(
         provider_type=1,
         provider=airdrop_id,
-        reciever_type=0,
-        reciever=user_id,
+        receiver_type=0,
+        receiver=user_id,
         amount=transaction_amount
     )
     db.add(newTransactionRequest)
@@ -750,8 +750,8 @@ def list_transaction(
                 models.Transaction.provider_type == 0
              ),
              and_(
-                models.Transaction.reciever == user_id,
-                models.Transaction.reciever_type == 0
+                models.Transaction.receiver == user_id,
+                models.Transaction.receiver_type == 0
              )
          )
     )
@@ -771,14 +771,14 @@ def create_transaction(
     db: Session,
     provider_type: int,
     provider_id: int,
-    reciever_type: int,
-    reciever_id: int
+    receiver_type: int,
+    receiver_id: int
 ):
     newTransactionRequest = models.Transaction(
         provider_type=provider_type,
         provider_id=provider_id,
-        reciever_type=reciever_type,
-        reciever_id=reciever_id
+        receiver_type=receiver_type,
+        receiver_id=receiver_id
     )
     db.add(newTransactionRequest)
     db.commit()

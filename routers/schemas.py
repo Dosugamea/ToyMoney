@@ -96,8 +96,10 @@ class AirdropEditRequest(BaseModel):
 class Transaction(BaseModel):
     id: int
     reception: datetime
+    provider_type: int
     provider: int
-    reciever: int
+    receiver_type: int
+    receiver: int
     amount: int
     message: constr(max_length=100)
 
