@@ -476,7 +476,9 @@ def list_airdrop_with_stat(db: Session, page: int, sort: int, count: int, user_i
                 '%Y-%m-%dT%H:%M:%S+09:00'
             )
         }
-        last_transaction = db.query(models.Transaction).filter(
+        last_transaction = db.query(models.Transaction).order_by(
+            desc(models.Transaction.id)
+        ).filter(
             models.Transaction.provider_type == 1,
             models.Transaction.provider == airdrop.id,
             models.Transaction.receiver_type == 0,
@@ -499,7 +501,7 @@ def list_airdrop_with_stat(db: Session, page: int, sort: int, count: int, user_i
                     microsecond=0
                 )
             # 要求した時刻が 受け取りできる時刻以下ならエラー
-            if requested_date < receivable_date:
+            if receivable_date > requested_date:
                 data["receivable"] = False
                 data["next_receivable"] = receivable_date.strftime(
                     '%Y-%m-%dT%H:%M:%S+09:00'
@@ -571,7 +573,9 @@ def get_airdrop_with_stat(db: Session, id: int, user_id: int):
             '%Y-%m-%dT%H:%M:%S+09:00'
         )
     }
-    last_transaction = db.query(models.Transaction).filter(
+    last_transaction = db.query(models.Transaction).order_by(
+        desc(models.Transaction.id)
+    ).filter(
         models.Transaction.provider_type == 1,
         models.Transaction.provider == airdrop.id,
         models.Transaction.receiver_type == 0,
@@ -594,7 +598,7 @@ def get_airdrop_with_stat(db: Session, id: int, user_id: int):
                 microsecond=0
             )
         # 要求した時刻が 受け取りできる時刻以下ならエラー
-        if requested_date < receivable_date:
+        if receivable_date > requested_date:
             data["receivable"] = False
             data["next_receivable"] = receivable_date.strftime(
                 '%Y-%m-%dT%H:%M:%S+09:00'
@@ -678,12 +682,18 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
     user = db.query(models.User).filter(
         models.User.id == user_id
     ).first()
-    airdrop = db.query(models.Airdrop).filter(
+    airdrop = db.query(
+        models.Airdrop
+    ).filter(
         models.Airdrop.id == airdrop_id
     ).first()
-    last_transaction = db.query(models.Transaction).filter(
+    last_transaction = db.query(models.Transaction).order_by(
+        desc(models.Transaction.id)
+    ).filter(
         models.Transaction.provider_type == 1,
-        models.Transaction.provider == airdrop_id
+        models.Transaction.provider == airdrop_id,
+        models.Transaction.receiver_type == 0,
+        models.Transaction.receiver == user_id
     ).first()
     before_money = user.money
     if last_transaction:
@@ -694,8 +704,8 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
         # 0: 経過した分数を見る
         if airdrop.mode == 0:
             receivable_date += datetime.timedelta(minutes=airdrop.interval)
-        # 1/2 : 経過した日数を見る
-        elif airdrop.mode < 3:
+        # 1/2/3 : 経過した日数を見る
+        elif airdrop.mode < 4:
             receivable_date += datetime.timedelta(days=airdrop.interval)
             receivable_date = receivable_date.replace(
                 hour=0,
@@ -704,7 +714,7 @@ def claim_airdrop(db: Session, airdrop_id: int, user_id: int):
                 microsecond=0
             )
         # 要求した時刻が 受け取りできる時刻以下ならエラー
-        if requested_date < receivable_date:
+        if receivable_date > requested_date:
             raise HTTPException(
                 status_code=429,
                 detail="The airdrop can not recieve for now."
