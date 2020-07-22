@@ -385,6 +385,7 @@ def put_machine(
     db: Session,
     id: int,
     name: str = "",
+    description: str = "",
     products: List[int] = []
 ):
     # パラメータ確認
@@ -405,13 +406,23 @@ def put_machine(
     machine_update = db.query(models.Machine).filter(
         models.Machine.id == id
     ).first()
-    if name:
+    if str(name) != "<class 'pydantic.types.ConstrainedStrValue'>" and name != "":
         machine_update.name = name
+    if str(description) != "<class 'pydantic.types.ConstrainedStrValue'>" and name != "":
+        machine_update.description = description
     if products:
-        productList = db.query(models.Product).filter(
-            models.Product.id.in_(products)
-        ).all()
-        machine_update.products = productList
+        products = list(set(products))
+        db.query(models.MachineInventory).filter(
+            models.MachineInventory.machine_id == id
+        ).delete()
+        newMachineInventory = [
+            models.MachineInventory(
+                machine_id=id,
+                product_id=p
+            )
+            for p in products
+        ]
+        machine_update.products = newMachineInventory
     db.commit()
     return True
 

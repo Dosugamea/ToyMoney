@@ -53,7 +53,7 @@ class MachineCreateRequest(BaseModel):
 class MachineEditRequest(BaseModel):
     name: Optional[str] = constr(max_length=63)
     description: Optional[str] = constr(max_length=300)
-    products:  Optional[List[Product]] = []
+    products:  Optional[List[int]] = []
 
     class Config:
         orm_mode = True
@@ -105,6 +105,16 @@ class Transaction(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+
+class TransactionUserCreateRequest(BaseModel):
+    target_user_id: int
+    amount: int
+
+    class Config:
+        orm_mode = True
+
 
 
 class User(BaseModel):

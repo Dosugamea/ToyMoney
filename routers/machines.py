@@ -79,13 +79,14 @@ async def get_machine(
 
 @router.put('/{machine_id}')
 async def set_machine_info_as_admin(
+    machine_id: int,
     machine: schemas.MachineEditRequest,
     admin: dict = Depends(verify_admin),
     db: Session = Depends(session)
 ):
     crud.put_machine(
         db,
-        machine.id,
+        machine_id,
         machine.name,
         machine.description,
         machine.products
