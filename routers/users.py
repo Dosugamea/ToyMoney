@@ -85,10 +85,17 @@ async def get_user_transactions(
 
 @router.post('/transactions/create')
 async def create_user_transaction(
+    user_transaction: schemas.TransactionUserCreateRequest,
     user: dict = Depends(verify_token),
     db: Session = Depends(session)
 ):
-    return {"text": "Not yet implemented"}
+    crud.create_user_transaction(
+        db,
+        user["id"],
+        user_transaction.target_user_id,
+        user_transaction.amount
+    )
+    return {"text": "ok"}
 
 
 @router.get('/ranking')

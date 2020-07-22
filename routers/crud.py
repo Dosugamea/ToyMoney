@@ -162,6 +162,45 @@ def delete_user(db: Session, id: int):
     return True
 
 
+def create_user_transaction(
+    db: Session,
+    user_id: int,
+    target_user_id: int,
+    amount: int
+):
+    isExist = db.query(models.User.id).filter_by(
+        id=target_user_id
+    ).scalar() is not None
+    if not isExist:
+        raise HTTPException(
+            status_code=404,
+            detail="The target user is not exist"
+        )
+    providerUser = db.query(models.User).filter_by(
+        id=user_id
+    ).first()
+    if providerUser.money < amount or amount < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="The amount is invalid"
+        )
+    receiverUser = db.query(models.User).filter_by(
+        id=target_user_id
+    ).first()
+    providerUser.money -= amount
+    receiverUser.money += amount
+    newTransactionRequest = models.Transaction(
+        provider_type=0,
+        provider=user_id,
+        receiver_type=0,
+        receiver=target_user_id,
+        amount=amount
+    )
+    db.add(newTransactionRequest)
+    db.commit()
+    return True
+
+
 def list_product(db: Session, page: int, sort: int, count: int):
     q = db.query(models.Product)
     product_count = db.query(models.Product).count()
