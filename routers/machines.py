@@ -70,7 +70,8 @@ async def get_machine(
                 "id": p.id,
                 "name": p.name,
                 "description": p.description,
-                "price": p.price
+                "price": p.price,
+                "inventory_limit": p.inventory_limit
             }
             for p in products
         ]

@@ -17,6 +17,7 @@ class ProductCreateRequest(BaseModel):
     name: constr(max_length=63)
     description: constr(max_length=300)
     price: int
+    inventory_limit: int
 
     class Config:
         orm_mode = True
@@ -26,6 +27,15 @@ class ProductEditRequest(BaseModel):
     name: Optional[str] = constr(max_length=63)
     description: Optional[str] = constr(max_length=300)
     price: Optional[int] = -1
+    inventory_limit: Optional[int] = -1
+
+    class Config:
+        orm_mode = True
+
+
+class ProductUserUseRequest(BaseModel):
+    id: int
+    amount: int
 
     class Config:
         orm_mode = True
@@ -107,14 +117,12 @@ class Transaction(BaseModel):
         orm_mode = True
 
 
-
 class TransactionUserCreateRequest(BaseModel):
     target_user_id: int
     amount: int
 
     class Config:
         orm_mode = True
-
 
 
 class User(BaseModel):

@@ -25,14 +25,31 @@ async def get_assets(
     user, inventories = crud.get_user(db, user['id'], True)
     inventories = [
         {
-            "id": p.id,
-            "name": p.name,
-            "description": p.description,
-            "price": p.price
+            "id": i[1].id,
+            "name": i[1].name,
+            "description": i[1].description,
+            "price": i[1].price,
+            "limit": i[1].inventory_limit,
+            "count": i[0].product_count
         }
-        for p in inventories
+        for i in inventories
     ]
     return {"text": "ok", "money": user.money, "assets": inventories}
+
+
+@router.post('/assets/use')
+async def use_asset(
+    use_request: schemas.ProductUserUseRequest,
+    user: dict = Depends(verify_token),
+    db: Session = Depends(session)
+):
+    crud.use_product(
+        db,
+        user["id"],
+        use_request.id,
+        use_request.amount
+    )
+    return {"text": "ok"}
 
 
 @router.get('/money')

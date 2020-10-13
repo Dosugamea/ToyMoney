@@ -47,7 +47,8 @@ async def create_product_as_admin(
         db,
         product.name,
         product.description,
-        product.price
+        product.price,
+        product.inventory_limit
     )
     return {"text": "ok"}
 
@@ -66,7 +67,8 @@ async def get_product(
         "id": product.id,
         "name": product.name,
         "description": product.description,
-        "price": product.price
+        "price": product.price,
+        "inventory_limit": product.inventory_limit
     }
 
 
@@ -81,7 +83,8 @@ async def set_product_info_as_admin(
         product.id,
         product.name,
         product.description,
-        product.price
+        product.price,
+        product.inventory_limit
     )
     return {"text": "ok"}
 

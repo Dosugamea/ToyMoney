@@ -10,6 +10,30 @@ import datetime
 import random
 
 
+def existChecker(model, db: Session, id: int = None, name: str = None):
+    if id:
+        isExist = db.query(model).filter_by(id=id).scalar() is not None
+    else:
+        isExist = db.query(model).filter_by(name=name).scalar() is not None
+    return isExist
+
+
+def isUserExist(db: Session, id: int = None, name: str = None):
+    return existChecker(models.User.id, db, id, name)
+
+
+def isProductExist(db: Session, id: int = None, name: str = None):
+    return existChecker(models.Product.id, db, id, name)
+
+
+def isAirdropExist(db: Session, id: int = None, name: str = None):
+    return existChecker(models.Airdrop.id, db, id, name)
+
+
+def isMachineExist(db: Session, id: int = None, name: str = None):
+    return existChecker(models.Machine.id, db, id, name)
+
+
 def list_user(db: Session, page: int, sort: int, count: int):
     q = db.query(models.User)
     user_count = db.query(models.User).count()
@@ -55,10 +79,7 @@ def create_admin(db: Session, name: str, password: str):
 
 def create_user(db: Session, new_user: schemas.UserCreateRequest):
     # 重複するアカウント禁止
-    isExist = db.query(models.User.id).filter_by(
-        name=new_user.name
-    ).scalar() is not None
-    if isExist:
+    if isUserExist(db, name=new_user.name):
         raise HTTPException(
             status_code=400,
             detail="The user name is already taken"
@@ -77,16 +98,12 @@ def create_user(db: Session, new_user: schemas.UserCreateRequest):
     newUser = db.query(models.User.id).filter_by(
         name=new_user.name
     ).first()
-    print(newUser)
     token = generate_token(db, newUser.id, 0)
     return token
 
 
 def get_user(db: Session, user_id: int, with_inventory: bool):
-    isExist = db.query(models.User.id).filter_by(
-        id=user_id
-    ).scalar() is not None
-    if not isExist:
+    if not isUserExist(db, id=user_id):
         raise HTTPException(
             status_code=404,
             detail="The user is not exist"
@@ -94,9 +111,10 @@ def get_user(db: Session, user_id: int, with_inventory: bool):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if with_inventory:
         user_inventory = db.query(
-            models.Product
+            models.UserInventory, models.Product
         ).join(
-            models.UserInventory
+            models.Product,
+            models.UserInventory.product_id == models.Product.id
         ).filter(
             models.UserInventory.user_id == user_id
         ).all()
@@ -117,10 +135,7 @@ def put_user(
             status_code=400,
             detail="Invalid request"
         )
-    isExist = db.query(models.User.id).filter_by(
-        id=id
-    ).scalar() is not None
-    if not isExist:
+    if not isUserExist(db, id=user_id):
         raise HTTPException(
             status_code=404,
             detail="The user is not exist"
@@ -140,10 +155,7 @@ def put_user(
 
 
 def delete_user(db: Session, id: int):
-    isExist = db.query(models.User.id).filter_by(
-        id=id
-    ).scalar() is not None
-    if not isExist:
+    if not isUserExist(db, id=id):
         raise HTTPException(
             status_code=404,
             detail="The user is not exist"
@@ -168,10 +180,7 @@ def create_user_transaction(
     target_user_id: int,
     amount: int
 ):
-    isExist = db.query(models.User.id).filter_by(
-        id=target_user_id
-    ).scalar() is not None
-    if not isExist:
+    if not isUserExist(db, id=target_user_id):
         raise HTTPException(
             status_code=404,
             detail="The target user is not exist"
@@ -219,11 +228,8 @@ def list_product(db: Session, page: int, sort: int, count: int):
     return q, product_count
 
 
-def create_product(db: Session, name: str, description: str, price: int):
-    isExist = db.query(models.Product.id).filter_by(
-        name=name
-    ).scalar() is not None
-    if isExist:
+def create_product(db: Session, name: str, description: str, price: int, limit: int):
+    if isProductExist(db, name=name):
         raise HTTPException(
             status_code=400,
             detail="The product name is already used"
@@ -231,7 +237,8 @@ def create_product(db: Session, name: str, description: str, price: int):
     newProductRequest = models.Product(
         name=name,
         description=description,
-        price=price
+        price=price,
+        inventory_limit=limit
     )
     db.add(newProductRequest)
     db.commit()
@@ -239,10 +246,7 @@ def create_product(db: Session, name: str, description: str, price: int):
 
 
 def get_product(db: Session, id: int):
-    isExist = db.query(models.Product.id).filter_by(
-        id=id
-    ).scalar() is not None
-    if not isExist:
+    if not isProductExist(db, id=id):
         raise HTTPException(
             status_code=404,
             detail="The product is not exist"
@@ -255,7 +259,8 @@ def put_product(
     id: int,
     name: str = "",
     description: str = "",
-    price: int = -1
+    price: int = -1,
+    inventory_limit: int = -1
 ):
     # パラメータ確認
     if name == description and price == -1:
@@ -263,10 +268,7 @@ def put_product(
             status_code=400,
             detail="Invalid request"
         )
-    isExist = db.query(models.Product.id).filter_by(
-        id=id
-    ).scalar() is not None
-    if not isExist:
+    if not isProductExist(db, id=id):
         raise HTTPException(
             status_code=404,
             detail="The product is not exist"
@@ -281,15 +283,14 @@ def put_product(
         product_update.description = description
     if price != -1:
         product_update.price = price
+    if inventory_limit != -1:
+        product_update.inventory_limit = inventory_limit
     db.commit()
     return True
 
 
 def delete_product(db: Session, id: int):
-    isExist = db.query(models.Product.id).filter_by(
-        id=id
-    ).scalar() is not None
-    if not isExist:
+    if not isProductExist(db, id=id):
         raise HTTPException(
             status_code=404,
             detail="The product is not exist"
@@ -308,18 +309,12 @@ def delete_product(db: Session, id: int):
 
 
 def buy_product(db: Session, user_id: int, product_id: int):
-    isExist = db.query(models.User.id).filter_by(
-        id=user_id
-    ).scalar() is not None
-    if not isExist:
+    if not isUserExist(db, id=user_id):
         raise HTTPException(
             status_code=404,
             detail="The user is not exist"
         )
-    isExist = db.query(models.Product.id).filter_by(
-        id=product_id
-    ).scalar() is not None
-    if not isExist:
+    if not isProductExist(db, id=product_id):
         raise HTTPException(
             status_code=404,
             detail="The product is not exist"
@@ -335,18 +330,88 @@ def buy_product(db: Session, user_id: int, product_id: int):
             status_code=402,
             detail="Not enough money"
         )
+    # インベントリ取得
+    alreadyHaving = db.query(models.UserInventory).filter(
+        models.UserInventory.user_id == user_id,
+        models.UserInventory.product_id == product_id
+    ).scalar() is not None
+    # 既に持っているなら個数加算
+    if alreadyHaving:
+        currentInventoryProduct = db.query(models.UserInventory).filter(
+            models.user_id == user_id,
+            product_id == product_id
+        ).first()
+        if currentInventoryProduct.product_count >= product.inventory_limit:
+            raise HTTPException(
+                status_code=406,
+                detail="""You reached inventory limit for this product.
+                Please sell or use to buy this product."""
+            )
+        currentInventoryProduct.product_count += 1
+    # 既に持っていなければ追加
+    else:
+        addInventoryRequest = models.UserInventory(
+            user_id=user_id,
+            product_id=product_id,
+            product_count=1
+        )
+        db.add(addInventoryRequest)
+    # ユーザーの残高変更
     user.money -= product.price
-    addInventoryRequest = models.UserInventory(
-        user_id=user_id,
-        product_id=product_id
-    )
-    db.add(addInventoryRequest)
     newTransactionRequest = models.Transaction(
         provider_type=0,
         provider=user_id,
         receiver_type=2,
         receiver=product_id,
         amount=product.price
+    )
+    db.add(newTransactionRequest)
+    db.commit()
+    return True
+
+
+def use_product(db: Session, user_id: int, product_id: int, amount: int):
+    if not isUserExist(db, id=user_id):
+        raise HTTPException(
+            status_code=404,
+            detail="The user is not exist"
+        )
+    if not isProductExist(db, id=product_id):
+        raise HTTPException(
+            status_code=404,
+            detail="The product is not exist"
+        )
+    isHaving = db.query(models.UserInventory).filter(
+        models.UserInventory.user_id == user_id,
+        models.UserInventory.product_id == product_id
+    ).scalar() is not None
+    if not isHaving:
+        raise HTTPException(
+            status_code=406,
+            detail="You don't have enough products"
+        )
+    userProduct = db.query(models.UserInventory).filter(
+        models.UserInventory.user_id == user_id,
+        models.UserInventory.product_id == product_id
+    ).first()
+    if userProduct.product_count < amount:
+        raise HTTPException(
+            status_code=406,
+            detail="You don't have enough products"
+        )
+    if userProduct.product_count > amount:
+        userProduct.product_count -= amount
+    else:
+        db.query(models.UserInventory).filter(
+            models.UserInventory.user_id == user_id,
+            models.UserInventory.product_id == product_id
+        ).delete()
+    newTransactionRequest = models.Transaction(
+        provider_type=0,
+        provider=user_id,
+        receiver_type=4,
+        receiver=product_id,
+        amount=amount
     )
     db.add(newTransactionRequest)
     db.commit()
@@ -389,7 +454,6 @@ def create_machine(
         )
         for p in products
     ]
-    print(productList)
     newMachineRequest = models.Machine(
         name=name,
         description=description,
@@ -655,6 +719,7 @@ def get_airdrop_with_stat(db: Session, id: int, user_id: int):
             )
     return data
 
+
 def put_airdrop(
     db: Session,
     id: int,
@@ -815,6 +880,25 @@ def list_transaction(
              )
          )
     )
+    transaction_count = q.count()
+    sortDict = {
+        1: desc(models.Transaction.id),
+        2: asc(models.Transaction.id)
+    }
+    if sort > 2:
+        sort = 1
+    q = q.order_by(sortDict[sort])
+    q = q.limit(count).offset((page-1)*count).all()
+    return q, transaction_count
+
+
+def list_transaction_as_admin(
+    db: Session,
+    page: int,
+    sort: int,
+    count: int
+):
+    q = db.query(models.Transaction)
     transaction_count = q.count()
     sortDict = {
         1: desc(models.Transaction.id),

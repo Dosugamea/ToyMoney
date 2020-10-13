@@ -18,12 +18,14 @@ class Product(Base):
     name = Column(String(255))
     description = Column(String(255))
     price = Column(Integer)
+    inventory_limit = Column(Integer)
 
     def __repr__(self):
         return f"""<Product(id={self.id},
         name={self.name},
         description={self.description},
-        price={self.price})>"""
+        price={self.price}),
+        inventory_limit={self.inventory_limit}>"""
 
 
 class UserInventory(Base):
@@ -34,9 +36,10 @@ class UserInventory(Base):
 
     user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     product_id = Column(Integer, ForeignKey('products.id'), primary_key=True)
+    product_count = Column(Integer)
 
     def __repr__(self):
-        return f"<UserInventory(owner={self.user_id}, product={self.product_id})>"
+        return f"<UserInventory(owner={self.user_id}, product={self.product_id}, count={self.product_count})>"
 
 
 class MachineInventory(Base):
@@ -98,7 +101,7 @@ class Transaction(Base):
     取引モデル
 
     provider_type 0: ユーザー 1: エアドロップ 2: 商品 3: 強制
-    receiver_type 0: ユーザー 1: エアドロップ 2: 商品 3: 強制
+    receiver_type 0: ユーザー 1: エアドロップ 2: 商品 3: 強制 4: 使用
     """
     __tablename__ = 'transactions'
 
