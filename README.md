@@ -4,14 +4,13 @@ The money said below is not-real money.
 
 ## Features
 - User can have a wallet.
-- User can give their money to otherone with message.
 - User can get transaction histories.
 - User can buy products from machines.
 - User can list their bought products.
-- User can watch their money ranking.
+- User can use their bought products.
+- User can see their money ranking.
 - Admin can make a machine sells products.
 - Admin can make an airdrop that gives money per specified time.
-- Admin can set transaction fee.
 - Admin can get all transaction history.
 - Admin can control user's wallet.
 
