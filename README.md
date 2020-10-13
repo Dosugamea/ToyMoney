@@ -16,26 +16,26 @@ The money said below is not-real money.
 - Admin can control user's wallet.
 
 ## API endpoints
-Wallets
-- wallets GET
-- wallets POST
-- wallets/properties GET
-- wallets/transactions GET
-- wallets/transactions/create POST
-- wallets/ranking GET
-- wallets/list GET (Admin only)
-- wallets/<wallets_id> GET (Admin only)
-- wallets/<wallets_id> PUT (Admin only)
-- wallets/<wallets_id> DELETE (Admin only)
+Users
+- users/create POST
+- users/assets GET
+- users/assets/use POST
+- users/money GET
+- users/transactions GET
+- users/transactions/create POST
+- users/ranking GET
+- users/<user_id:int> GET
+- users/admin/list GET (Admin only)
+- users/admin/<user_id:int> GET (Admin only)
+- users/admin/<user_id:int> PUT (Admin only)
+- users/admin/<user_id:int> DELETE (Admin only)
 
 Transactions
 - transactions GET (Admin only)
-- transactions/fee GET (Admin only)
-- transactions/fee PUT (Admin only)
 
 Machine
-- machines GET
-- machines POST (Admin only)
+- machines/list GET
+- machines/create POST (Admin only)
 - machines/<machine_id:int> GET
 - machines/<machine_id:int> PUT (Admin only)
 - machines/<machine_id:int> DELETE  (Admin only)
@@ -44,16 +44,20 @@ Machine
 ※内部的にユーザーIDも作成して管理する  
 
 Product
-- products GET
-- products POST (Admin only)
+- products/list GET
+- products/create POST (Admin only)
 - products/<product_id:int> GET
 - products/<product_id:int> PUT (Admin only)
-- products/<product_id:int> DELETE (Admin only)  
-※商品は自販機に後で個別に設定する
+- products/<product_id:int> DELETE (Admin only) 
+- products/<product_id>/buy POST
+※自販機に関係なく直接購入もできる
 
 Airdrop
-- airdrops GET
-- airdrops POST (Admin only)
-- airdrops/<airdrop_id:int> GET
-- airdrops/<airdrop_id:int> PUT
+- airdrops/list GET
+- airdrops/list_with_status GET
+- airdrops/create POST (Admin only)
+- airdrops/<airdrop_id:int>/status GET
 - airdrops/<airdrop_id:int>/claim POST
+- airdrops/<airdrop_id:int> GET
+- airdrops/<airdrop_id:int> PUT (Admin only)
+- airdrops/<airdrop_id:int> DELETE (Admin only) 
