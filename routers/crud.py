@@ -338,8 +338,8 @@ def buy_product(db: Session, user_id: int, product_id: int):
     # 既に持っているなら個数加算
     if alreadyHaving:
         currentInventoryProduct = db.query(models.UserInventory).filter(
-            models.user_id == user_id,
-            product_id == product_id
+            models.UserInventory.user_id == user_id,
+            models.UserInventory.product_id == product_id
         ).first()
         if currentInventoryProduct.product_count >= product.inventory_limit:
             raise HTTPException(
