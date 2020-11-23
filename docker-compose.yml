@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  toymoney_db:
+    container_name: toymoney_mariadb
+    hostname: toymoney_mariadb
+    image: mariadb
+    restart: always
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    volumes:
+      - ${VOLUME_DB_PATH}:/var/lib/mysql:delegated
+    ports:
+      - ${PORT_DB}:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASS}
+  toymoney_adminer:
+    container_name: toymoney_adminer
+    hostname: toymoney_adminer
+    image: adminer
+    restart: always
+    ports:
+      - ${PORT_ADMINER}:8080
+    depends_on:
+      - toymoney_db
+  toymoney_api:
+    container_name: toymoney_api
+    hostname: toymoney_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - ${PORT_API}:5000
+    depends_on:
+      - toymoney_db
